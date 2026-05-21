@@ -1,0 +1,17 @@
+{
+  "name": "DoorDesk",
+  "short_name": "DoorDesk",
+  "description": "Internal door sales tool",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#155e75",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

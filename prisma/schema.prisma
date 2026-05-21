@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  SALES
+}
+
+enum ClientStatus {
+  ACTIVE
+  PAST
+  PROSPECT
+}
+
+enum OrderStatus {
+  DRAFT
+  SUBMITTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum Handing {
+  LEFT
+  RIGHT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         UserRole @default(SALES)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  clients Client[]
+  orders  Order[]
+}
+
+model Client {
+  id             String       @id @default(cuid())
+  name           String
+  company        String?
+  email          String?
+  phone          String?
+  address        String?
+  status         ClientStatus @default(PROSPECT)
+  notes          String?
+  uniqueClientId String       @unique
+  archivedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  createdById String
+  createdBy   User    @relation(fields: [createdById], references: [id])
+  orders      Order[]
+
+  @@index([status])
+  @@index([archivedAt])
+  @@index([createdById])
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  orderNumber String      @unique
+  status      OrderStatus @default(DRAFT)
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  clientId    String
+  client      Client      @relation(fields: [clientId], references: [id])
+  createdById String
+  createdBy   User       @relation(fields: [createdById], references: [id])
+  items       OrderItem[]
+
+  @@index([clientId])
+  @@index([createdById])
+  @@index([status])
+  @@index([createdAt])
+  @@index([orderNumber])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  family    String
+  style     String
+  height    Decimal
+  width     Decimal
+  thickness Decimal
+  core      String
+  quantity  Int      @default(1)
+  handing   Handing
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model Product {
+  id        String   @id @default(cuid())
+  shopifyId String?  @unique
+  title     String
+  family    String?
+  style     String?
+  sku       String?  @unique
+  height    Decimal?
+  width     Decimal?
+  thickness Decimal?
+  core      String?
+  rawData   Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([family])
+  @@index([style])
+}
