@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, Shield, ShoppingBag, Users } from "lucide-react";
+import { Boxes, LayoutDashboard, Shield, ShoppingBag, Users } from "lucide-react";
 import { UserRole } from "@prisma/client";
 import { auth } from "@/auth";
 import { logoutAction } from "@/app/actions/auth-actions";
@@ -9,6 +9,7 @@ const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/orders", label: "Orders", icon: ShoppingBag },
+  { href: "/products", label: "Products", icon: Boxes },
   { href: "/admin", label: "Admin", icon: Shield, adminOnly: true }
 ];
 

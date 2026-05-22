@@ -91,6 +91,7 @@ model Order {
 
 model OrderItem {
   id        String   @id @default(cuid())
+  sku       String?
   family    String
   style     String
   height    Decimal
@@ -105,8 +106,12 @@ model OrderItem {
 
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
 
   @@index([orderId])
+  @@index([productId])
+  @@index([sku])
 }
 
 model Product {
@@ -114,16 +119,31 @@ model Product {
   shopifyId String?  @unique
   title     String
   family    String?
+  familyCode String?
+  familyName String?
   style     String?
   sku       String?  @unique
+  heightCode String?
   height    Decimal?
+  widthCode String?
   width     Decimal?
+  thicknessCode String?
   thickness Decimal?
+  coreCode  String?
   core      String?
   rawData   Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  orderItems OrderItem[]
+
   @@index([family])
+  @@index([familyCode])
+  @@index([familyName])
   @@index([style])
+  @@index([heightCode])
+  @@index([widthCode])
+  @@index([coreCode])
+  @@index([thicknessCode])
+  @@index([height, width, core, thickness])
 }

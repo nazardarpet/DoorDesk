@@ -4,6 +4,7 @@ import { OrderStatus, Prisma, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth-guards";
+import { buildOrderItemSnapshots, type OrderItemSnapshot } from "@/lib/order-product-snapshots";
 import { nextOrderNumberFromLatest } from "@/lib/order-number";
 import { canTransitionOrderStatus } from "@/lib/order-status";
 import { prisma } from "@/lib/prisma";
@@ -23,28 +24,40 @@ function parseOrderPayload(formData: FormData) {
   }
 }
 
-function toOrderItemCreate(item: {
-  family: string;
-  style: string;
-  height: string;
-  width: string;
-  thickness: string;
-  core: string;
-  quantity: string;
-  handing: "LEFT" | "RIGHT";
-  notes?: string;
-}) {
+function toOrderItemCreate(item: OrderItemSnapshot) {
   return {
+    productId: item.productId,
+    sku: item.sku,
     family: item.family,
     style: item.style,
     height: new Prisma.Decimal(item.height),
     width: new Prisma.Decimal(item.width),
     thickness: new Prisma.Decimal(item.thickness),
     core: item.core,
-    quantity: Number(item.quantity),
+    quantity: item.quantity,
     handing: item.handing,
     notes: item.notes
   };
+}
+
+async function resolveOrderItemSnapshots(items: Parameters<typeof buildOrderItemSnapshots>[0]) {
+  const productIds = Array.from(new Set(items.map((item) => item.productId)));
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+    select: {
+      id: true,
+      title: true,
+      sku: true,
+      family: true,
+      style: true,
+      height: true,
+      width: true,
+      thickness: true,
+      core: true
+    }
+  });
+
+  return buildOrderItemSnapshots(items, products);
 }
 
 export async function createOrderAction(
@@ -72,6 +85,11 @@ export async function createOrderAction(
     return { success: false, error: "Restore this client before creating an order." };
   }
 
+  const snapshotResult = await resolveOrderItemSnapshots(parsed.data.items);
+  if (!snapshotResult.success) {
+    return { success: false, error: snapshotResult.error };
+  }
+
   const order = await prisma.$transaction(async (tx) => {
     const latestOrder = await tx.order.findFirst({
       orderBy: { orderNumber: "desc" },
@@ -85,7 +103,7 @@ export async function createOrderAction(
         createdById: user.id,
         notes: parsed.data.notes,
         items: {
-          create: parsed.data.items.map(toOrderItemCreate)
+          create: snapshotResult.items.map(toOrderItemCreate)
         }
       },
       select: { id: true }
@@ -136,6 +154,11 @@ export async function updateOrderAction(
     return { success: false, error: "You can only edit your own orders." };
   }
 
+  const snapshotResult = await resolveOrderItemSnapshots(parsed.data.items);
+  if (!snapshotResult.success) {
+    return { success: false, error: snapshotResult.error };
+  }
+
   await prisma.$transaction(async (tx) => {
     await tx.orderItem.deleteMany({ where: { orderId: parsed.data.id } });
     await tx.order.update({
@@ -143,7 +166,7 @@ export async function updateOrderAction(
       data: {
         clientId: parsed.data.clientId,
         notes: parsed.data.notes,
-        items: { create: parsed.data.items.map(toOrderItemCreate) }
+        items: { create: snapshotResult.items.map(toOrderItemCreate) }
       },
       select: { id: true }
     });

@@ -130,7 +130,11 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
             <tbody>
               {orders.map((order) => (
                 <tr key={order.id} className="border-t border-slate-100">
-                  <td className="px-4 py-3 font-mono text-xs">{order.orderNumber}</td>
+                  <td className="px-4 py-3 font-mono text-xs">
+                    <Link className="font-semibold text-slate-950 hover:text-cyan-800 hover:underline" href={`/orders/${order.id}`}>
+                      {order.orderNumber}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3">{order.client.name}</td>
                   <td className="px-4 py-3">{order.status}</td>
                   <td className="px-4 py-3">{order._count.items}</td>

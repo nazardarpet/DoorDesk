@@ -26,6 +26,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         orderBy: { createdAt: "asc" },
         select: {
           id: true,
+          productId: true,
+          sku: true,
           family: true,
           style: true,
           height: true,
@@ -34,7 +36,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           core: true,
           quantity: true,
           handing: true,
-          notes: true
+          notes: true,
+          product: {
+            select: {
+              familyCode: true,
+              heightCode: true,
+              widthCode: true,
+              coreCode: true,
+              thicknessCode: true
+            }
+          }
         }
       }
     }
@@ -53,7 +64,23 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     prisma.product.findMany({
       orderBy: [{ family: "asc" }, { style: "asc" }],
       take: 500,
-      select: { id: true, title: true, sku: true, family: true, style: true, core: true, height: true, width: true, thickness: true }
+      select: {
+        id: true,
+        title: true,
+        sku: true,
+        family: true,
+        familyCode: true,
+        familyName: true,
+        style: true,
+        core: true,
+        coreCode: true,
+        height: true,
+        heightCode: true,
+        width: true,
+        widthCode: true,
+        thickness: true,
+        thicknessCode: true
+      }
     })
   ]);
 
@@ -95,6 +122,13 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           clientId: order.clientId,
           notes: order.notes,
           items: order.items.map((item) => ({
+            productId: item.productId ?? "",
+            sku: item.sku ?? "",
+            familyCode: item.product?.familyCode ?? "",
+            heightCode: item.product?.heightCode ?? "",
+            widthCode: item.product?.widthCode ?? "",
+            coreCode: item.product?.coreCode ?? "",
+            thicknessCode: item.product?.thicknessCode ?? "",
             family: item.family,
             style: item.style,
             height: item.height.toString(),
@@ -123,11 +157,17 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           title: product.title,
           sku: product.sku,
           family: product.family,
+          familyCode: product.familyCode,
+          familyName: product.familyName,
           style: product.style,
           core: product.core,
+          coreCode: product.coreCode,
           height: product.height?.toString() ?? null,
+          heightCode: product.heightCode,
           width: product.width?.toString() ?? null,
-          thickness: product.thickness?.toString() ?? null
+          widthCode: product.widthCode,
+          thickness: product.thickness?.toString() ?? null,
+          thicknessCode: product.thicknessCode
         }))}
       />
     </div>

@@ -23,11 +23,17 @@ export default async function NewOrderPage() {
         title: true,
         sku: true,
         family: true,
+        familyCode: true,
+        familyName: true,
         style: true,
         core: true,
+        coreCode: true,
         height: true,
+        heightCode: true,
         width: true,
-        thickness: true
+        widthCode: true,
+        thickness: true,
+        thicknessCode: true
       }
     })
   ]);
@@ -49,16 +55,22 @@ export default async function NewOrderPage() {
             id: client.id,
             label: `${client.uniqueClientId} - ${client.name}${client.company ? ` (${client.company})` : ""}`
           }))}
-        products={products.map((product) => ({
+          products={products.map((product) => ({
             id: product.id,
             title: product.title,
             sku: product.sku,
             family: product.family,
+            familyCode: product.familyCode,
+            familyName: product.familyName,
             style: product.style,
             core: product.core,
+            coreCode: product.coreCode,
             height: product.height?.toString() ?? null,
+            heightCode: product.heightCode,
             width: product.width?.toString() ?? null,
-            thickness: product.thickness?.toString() ?? null
+            widthCode: product.widthCode,
+            thickness: product.thickness?.toString() ?? null,
+            thicknessCode: product.thicknessCode
           }))}
         />
       )}

@@ -58,6 +58,8 @@ const integerString = z
 
 export const orderItemSchema = z.object({
   id: optionalText,
+  productId: z.string().trim().min(1, "Select a product from the imported catalog"),
+  sku: z.string().trim().min(1, "SKU is required"),
   family: z.string().trim().min(1, "Family is required"),
   style: z.string().trim().min(1, "Style is required"),
   height: decimalString,

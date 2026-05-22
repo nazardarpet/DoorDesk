@@ -1,4 +1,12 @@
 import { parseDimensionText } from "@/lib/shopify";
+import {
+  parseProductSku,
+  productCoreCodes,
+  productFamilyCodes,
+  productHeightCodes,
+  productThicknessCodes,
+  productWidthCodes
+} from "@/lib/product-sku";
 
 export type ProductImportRow = {
   shopifyId?: string;
@@ -6,9 +14,15 @@ export type ProductImportRow = {
   family?: string;
   style?: string;
   sku?: string;
+  familyCode?: string;
+  familyName?: string;
+  heightCode?: string;
   height?: number;
+  widthCode?: string;
   width?: number;
+  thicknessCode?: string;
   thickness?: number;
+  coreCode?: string;
   core?: string;
   rawData: Record<string, unknown>;
   skipped: boolean;
@@ -18,6 +32,7 @@ export type ProductImportRow = {
 type RawRow = Record<string, string>;
 
 const shopifyIdColumns = ["Variant ID", "Variant Id", "Variant Shopify ID", "Variant Shopify Id", "Product ID", "Product Id", "ID", "Id"];
+const familyCodesByLength = Object.keys(productFamilyCodes).sort((left, right) => right.length - left.length);
 
 function parseCsvLine(line: string) {
   const cells: string[] = [];
@@ -74,8 +89,14 @@ function normalizeRows(rows: RawRow[]) {
     const heightParts = parseDimensionText(row["Option1 Value"] ?? "");
     const widthParts = parseDimensionText(row["Option3 Value"] ?? "");
     const sku = row["Variant SKU"] || row["Variant Barcode"] || undefined;
+    const parsedSku = parseProductSku(sku);
+    const fallbackCode = fallbackFamilyCode(sku);
+    const core = parsedSku?.core ?? (row["Option2 Value"] || undefined);
     const shopifyId = shopifyIdColumns.map((column) => row[column]?.trim()).find(Boolean);
-    const resolvedFamily = family || tags.split(",").map((tag) => tag.trim()).find(Boolean) || undefined;
+    const resolvedFamily =
+      parsedSku?.familyName ??
+      (fallbackCode ? productFamilyCodes[fallbackCode as keyof typeof productFamilyCodes] : undefined) ??
+      (family || tags.split(",").map((tag) => tag.trim()).find(Boolean) || undefined);
     const resolvedTitle = title || handle || sku || "Untitled product";
 
     return {
@@ -84,15 +105,38 @@ function normalizeRows(rows: RawRow[]) {
       family: resolvedFamily,
       style: title || handle || undefined,
       sku,
-      height: heightParts.primary,
-      width: widthParts.primary,
-      thickness: heightParts.thickness,
-      core: row["Option2 Value"] || undefined,
+      familyCode: parsedSku?.familyCode ?? fallbackCode,
+      familyName: parsedSku?.familyName ?? (fallbackCode ? productFamilyCodes[fallbackCode as keyof typeof productFamilyCodes] : undefined),
+      heightCode: parsedSku?.heightCode ?? codeForValue(productHeightCodes, heightParts.primary),
+      height: parsedSku?.height ?? heightParts.primary,
+      widthCode: parsedSku?.widthCode ?? codeForValue(productWidthCodes, widthParts.primary),
+      width: parsedSku?.width ?? widthParts.primary,
+      thicknessCode: parsedSku?.thicknessCode ?? codeForValue(productThicknessCodes, heightParts.thickness),
+      thickness: parsedSku?.thickness ?? heightParts.thickness,
+      coreCode: parsedSku?.coreCode ?? codeForCore(core),
+      core,
       rawData: row,
       skipped: !shopifyId && !sku,
       reason: !shopifyId && !sku ? "Missing SKU and Shopify variant ID" : undefined
     } satisfies ProductImportRow;
   });
+}
+
+function codeForValue<T extends Record<string, { value: number }>>(record: T, value: number | undefined) {
+  if (value == null) {
+    return undefined;
+  }
+
+  return Object.entries(record).find(([, option]) => option.value === value)?.[0];
+}
+
+function codeForCore(value: string | undefined) {
+  return Object.entries(productCoreCodes).find(([, core]) => core === value)?.[0];
+}
+
+function fallbackFamilyCode(sku: string | undefined) {
+  const normalizedSku = sku?.trim().toUpperCase();
+  return normalizedSku ? familyCodesByLength.find((code) => normalizedSku.startsWith(code)) : undefined;
 }
 
 export function parseShopifyCsv(csv: string) {

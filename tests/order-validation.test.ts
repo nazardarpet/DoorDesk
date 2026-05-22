@@ -8,6 +8,8 @@ describe("order validation", () => {
       notes: "Rush if possible",
       items: [
         {
+          productId: "prod_caim_30_hc",
+          sku: "CAIM6830HC138",
           family: "Caiman",
           style: "Bifold",
           height: "80",
@@ -19,6 +21,8 @@ describe("order validation", () => {
           notes: ""
         },
         {
+          productId: "prod_caim_30_sc",
+          sku: "CAIM7030SC138",
           family: "Caiman",
           style: "Bifold",
           height: "84",
@@ -39,6 +43,28 @@ describe("order validation", () => {
     const result = createOrderSchema.safeParse({
       clientId: "client_1",
       items: []
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  test("rejects order items without an imported product reference", () => {
+    const result = createOrderSchema.safeParse({
+      clientId: "client_1",
+      items: [
+        {
+          sku: "CAIM6830HC138",
+          family: "Caiman",
+          style: "Bifold",
+          height: "80",
+          width: "30",
+          thickness: "1.375",
+          core: "Hollow Core",
+          quantity: "2",
+          handing: "LEFT",
+          notes: ""
+        }
+      ]
     });
 
     expect(result.success).toBe(false);

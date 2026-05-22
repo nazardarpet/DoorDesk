@@ -58,11 +58,17 @@ export async function POST(request: Request) {
       shopifyId: row.shopifyId,
       title: row.title,
       family: row.family,
+      familyCode: row.familyCode,
+      familyName: row.familyName,
       style: row.style,
       sku: row.sku,
+      heightCode: row.heightCode,
       height: row.height,
+      widthCode: row.widthCode,
       width: row.width,
+      thicknessCode: row.thicknessCode,
       thickness: row.thickness,
+      coreCode: row.coreCode,
       core: row.core,
       rawData: row.rawData
     };
